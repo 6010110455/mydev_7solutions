@@ -3,36 +3,38 @@ import _ from "lodash";
 interface Item {
   type: string;
   name: string;
+  id: number; // Add an ID to uniquely identify each item
 }
 
 const initialItems: Item[] = [
-  { type: "Fruit", name: "Apple" },
-  { type: "Vegetable", name: "Broccoli" },
-  { type: "Vegetable", name: "Mushroom" },
-  { type: "Fruit", name: "Banana" },
-  { type: "Vegetable", name: "Tomato" },
-  { type: "Fruit", name: "Orange" },
-  { type: "Fruit", name: "Mango" },
-  { type: "Fruit", name: "Pineapple" },
-  { type: "Vegetable", name: "Cucumber" },
-  { type: "Fruit", name: "Watermelon" },
-  { type: "Vegetable", name: "Carrot" },
+  { type: "Fruit", name: "Apple", id: 1 },
+  { type: "Vegetable", name: "Broccoli", id: 2 },
+  { type: "Vegetable", name: "Mushroom", id: 3 },
+  { type: "Fruit", name: "Banana", id: 4 },
+  { type: "Vegetable", name: "Tomato", id: 5 },
+  { type: "Fruit", name: "Orange", id: 6 },
+  { type: "Fruit", name: "Mango", id: 7 },
+  { type: "Fruit", name: "Pineapple", id: 8 },
+  { type: "Vegetable", name: "Cucumber", id: 9 },
+  { type: "Fruit", name: "Watermelon", id: 10 },
+  { type: "Vegetable", name: "Carrot", id: 11 },
 ];
 
 const App: React.FC = () => {
   const [items, setItems] = useState<Item[]>(initialItems);
   const [fruits, setFruits] = useState<Item[]>([]);
   const [vegetables, setVegetables] = useState<Item[]>([]);
-  const [timerItems, setTimerItems] = useState<Item[]>([]);
+  const [timerIDs, setTimerIDs] = useState<{ [key: number]: NodeJS.Timeout }>(
+    {}
+  );
 
-  console.log("timerItems", timerItems);
-   console.log("items", items);
-  
+  console.log("timerIDs", timerIDs);
+  console.log("items", items);
 
   const handleClick = (item: Item) => {
     // Remove the item from the original list
     setItems((currentItems) =>
-      currentItems.filter((currentItem) => currentItem !== item)
+      currentItems.filter((currentItem) => currentItem.id !== item.id)
     );
 
     // Add the item to the corresponding list based on its type
@@ -42,33 +44,35 @@ const App: React.FC = () => {
       setVegetables((currentVeggies) => [...currentVeggies, item]);
     }
 
-    setTimerItems((current) => [...current, item]);
+    const timerId = setTimeout(() => {
+      setFruits((currentFruits) =>
+        currentFruits.filter((fruit) => fruit.id !== item.id)
+      );
+      setVegetables((currentVeggies) =>
+        currentVeggies.filter((veg) => veg.id !== item.id)
+      );
+      setItems((currentItems) => [...currentItems, item]);
+      const newTimerIDs = { ...timerIDs };
+      delete newTimerIDs[item.id];
+      setTimerIDs(newTimerIDs);
+    }, 5000);
+    setTimerIDs({ ...timerIDs, [item.id]: timerId });
   };
 
   const handleLeftClick = (item: Item) => {
-    setItems((currentItems) => [...currentItems, item]);
-    if (item.type === "Fruit") {
-      setFruits((currentFruits) =>
-        currentFruits.filter((fruit) => fruit !== item)
-      );
-    } else if (item.type === "Vegetable") {
-      setVegetables((currentVeggies) =>
-        currentVeggies.filter((veg) => veg !== item)
-      );
-    }
-  };
+    clearTimeout(timerIDs[item.id]);
+    const newTimerIDs = { ...timerIDs };
+    delete newTimerIDs[item.id];
+    setTimerIDs(newTimerIDs);
 
-  useEffect(() => {
-    timerItems.forEach((item) => {
-      const timer = setTimeout(() => {
-        setFruits((fruits) => fruits.filter((fruit) => fruit !== item));
-        setVegetables((vegetables) => vegetables.filter((veg) => veg !== item));
-        setItems((currentItems) => [...currentItems, item]);
-        setTimerItems((current) => current.filter((ti) => ti !== item));
-      }, 5000);
-      return () => clearTimeout(timer);
-    });
-  }, [timerItems, fruits, vegetables]);
+    setFruits((currentFruits) =>
+      currentFruits.filter((fruit) => fruit.id !== item.id)
+    );
+    setVegetables((currentVeggies) =>
+      currentVeggies.filter((veg) => veg.id !== item.id)
+    );
+    setItems((currentItems) => [...currentItems, item]);
+  };
 
   return (
     <div className="grid grid-cols-3 h-screen m-5">
